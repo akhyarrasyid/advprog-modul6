@@ -5,7 +5,11 @@ Advance Programming
 - Kelas   : Advance Programming - A
 - NPM     : 2306241682
 
+**reflections shortcut**
+- [Commit 1](#milestone-1-single-threaded-web-server)
+- [Commit 2](#milestone-2-returning-html)
 
+ 
 ## Milestone 1: Single-Threaded Web Server
 
 Pada tahap pertama ini, saya telah membuat sebuah **web server sederhana** menggunakan **Rust** yang berjalan dalam **mode single-threaded**. Web server ini terdiri dari dua fungsi utama:
@@ -121,9 +125,65 @@ dari output yang dihasilkan di terminal saya tsb, saya melihat bahwa browser men
 
 ---
 
+## Milestone 2: Returning HTML
 
+setelah saya menangani _connection_ dan mencetak request HTTP di terminal pada milestone 1 tadi, langkah selanjutnya di milestone 2 ini adalah mengirimkan respons HTML agar dapat ditampilkan di browser.
 
+### Modifikasi `handle_connection()`
+saya memodifikasi fungsi `handle_connection()` agar dapat membaca file HTML dan mengirimkannya sebagai respons HTTP.
 
+### Perubahan dalam `main.rs`
+```rust
+use std::{
+    fs,
+    io::{prelude::*, BufReader},
+    net::{TcpListener, TcpStream},
+};
 
+fn handle_connection(mut stream: TcpStream) {
+    let buf_reader = BufReader::new(&mut stream);
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .map(|result| result.unwrap())
+        .take_while(|line| !line.is_empty())
+        .collect();
 
+    let status_line = "HTTP/1.1 200 OK"; 
+    let contents = fs::read_to_string("hello.html").unwrap(); 
+    let length = contents.len();
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+    stream.write_all(response.as_bytes()).unwrap();
+}
+```
+
+### Struktur File HTML
+saya juga membuat file `hello.html` yang berisi halaman sederhana:
+```html
+<!DOCTYPE html>
+ <html lang="en">
+     <head>
+         <meta charset="utf-8">
+         <title>Hello!</title> 
+     </head> 
+     <body>
+         <h1>Hello!</h1> 
+         <p>Hi from Rust, running from Akhyar’s machine.</p>
+     </body>
+ </html>
+```
+
+### Penjelasan perubahan di main cara bisa membaca html nya
+1. **Membaca File HTML**
+   - menggunakan `fs::read_to_string("hello.html")` untuk membaca konten file HTML.
+   
+2. **Membentuk Respons HTTP**
+   - status HTTP 200 OK ditetapkan untuk menunjukkan bahwa permintaan berhasil.
+   - header `Content-Length` digunakan untuk memberi tahu browser ukuran konten yang dikirimkan.
+   - konten HTML kemudian dikirim dalam respons.
+
+3. **Menulis Respons ke Stream**
+   - `stream.write_all(response.as_bytes()).unwrap();` memastikan data dikirim ke browser.
+
+### Screenshot
+![Commit 2 Screenshot](/assets/images/commit2.jpg)
 
