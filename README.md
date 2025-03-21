@@ -126,6 +126,8 @@ dari output yang dihasilkan di terminal saya tsb, saya melihat bahwa browser men
 ---
 
 ## Milestone 2: Returning HTML
+### Screenshot
+![Commit 2 Screenshot](/assets/images/commit2.jpg)
 
 setelah saya menangani _connection_ dan mencetak request HTTP di terminal pada milestone 1 tadi, langkah selanjutnya di milestone 2 ini adalah mengirimkan respons HTML agar dapat ditampilkan di browser.
 
@@ -184,6 +186,18 @@ saya juga membuat file `hello.html` yang berisi halaman sederhana:
 3. **Menulis Respons ke Stream**
    - `stream.write_all(response.as_bytes()).unwrap();` memastikan data dikirim ke browser.
 
-### Screenshot
-![Commit 2 Screenshot](/assets/images/commit2.jpg)
+
+## Milestone 3: Validating Request and Selectively Responding
+
+![Commit 3 screen capture](/assets/images/commit3.png)
+
+pada milestone 3 ini, saya meningkatkan web server agar dapat memvalidasi permintaan yang masuk dan memberikan respons yang sesuai. sekarang web-server bisa menampilkan halaman lain yang berbeda dan bisa juga me-return page 404 kalau requestnya tidak sesuai.
+
+Pada pembaruan ini, server hanya bisa mengekstrak request line pertama yang berisi metode HTTP, path, dan versi, dibanding mengumpulkan semua header HTTP. Saya juga melakukan refactoring dengan menggunakan `match` untuk menangani permintaan dengan lebih efisien. Jika request menuju root path (GET / HTTP/1.1), server bakal mengembalikan `hello.html` dengan status 200 OK. sedangkan untuk rute lainnya, server mengembalikan `404.html` dengan status 404 NOT FOUND. Dengan pendekatan ini, server bisa menampilkan halaman yang sesuai berdasarkan request sehingga memberikan umpan balik yang lebih baik kepada pengguna. intinya sekarang, server dapat menangani permintaan, menentukan respons berdasarkan path, dan memberikan halaman yang sesuai tanpa kehilangan efisiensi dalam model single-threaded.
+
+### Manfaat Refactoring dengan `match`:
+1. **Menghindari kode berulang** yang terjadi jika menggunakan `if-else`.
+2. **Memastikan semua variabel terinisialisasi dengan benar**, membantu compiler Rust dalam validasi kode.
+3. **Kode lebih bersih dan mudah diperluas** dengan menambahkan case baru tanpa mengulang logika yang sama.
+4. **Menggunakan variabel immutable** (`let` tanpa `mut`), meningkatkan keamanan dalam pemrosesan paralel.
 
