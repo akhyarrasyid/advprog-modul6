@@ -10,7 +10,7 @@ Advance Programming
 - [Commit 2](#milestone-2-returning-html)
 - [Commit 3](#milestone-3-validating-request-and-selectively-responding)
 - [Commit 4](#milestone-4-simulation-of-slow-request)
-
+- [Commit 5](#milestone-5-multithreaded-server)
 
 ## Milestone 1: Single-Threaded Web Server
 
@@ -209,3 +209,9 @@ Pada pembaruan ini, server hanya bisa mengekstrak request line pertama yang beri
 Pada tahap ini, saya menambahkan penanganan untuk permintaan ke URI `/sleep`. Jika ada pengguna yang mengakses `/sleep`, server akan "tidur" selama 10 detik sebelum mengembalikan respons. Karena server masih berjalan secara single-threaded, permintaan lain yang masuk dalam periode tersebut harus menunggu hingga permintaan sebelumnya selesai diproses. Masalah ini muncul karena fungsi handle_connection menangani setiap permintaan secara berurutan. Ketika ada permintaan yang membutuhkan waktu lama untuk dieksekusi, seperti `/sleep`, seluruh permintaan lain ikut tertunda. Hal ini menunjukkan bahwa server single-threaded memiliki keterbatasan dalam menangani banyak permintaan sekaligus. Secara teknis, server bakal bekerja dengan memproses koneksi secara berurutan dari `listener.incoming()`. Karena hanya ada satu thread yang aktif, setiap koneksi harus selesai sebelum koneksi berikutnya dapat diproses. Dengan menambahkan `thread::sleep()`, saya mensimulasikan operasi yang membutuhkan waktu lama, seperti pemrosesan data yang kompleks atau pemanggilan API eksternal.
 
 dari yang sudah saya lakukan ini, saya paham kalau hal ini menunjukkan mengapa server single-threaded kurang efisien dalam menangani beban tinggi dan bagaimana model multi-threading atau async menjadi solusi untuk meningkatkan performa.
+
+
+## Milestone 5: Multithreaded Server
+
+Pada tahap ini, server diperbarui menjadi multithreaded menggunakan Thread Pool agar dapat menangani beberapa koneksi secara bersamaan tanpa saling menunggu.
+Perubahan utamanya, saya menggunakan ThreadPool::new(4) pada server, yang membuat 4 `worker` thread untuk menangani permintaan secara paralel. Kemudian, setiap permintaan dikirim ke `worker` thread melalui channel `mpsc::Sender<Job>`, ini akan memastikan distribusi tugas secara efisien. selanjutnya, setiap `worker` memiliki thread yang terus aktif, menunggu tugas baru dari channel, lalu mengeksekusinya sebelum kembali menunggu tugas berikutnya. Dengan perubahan arsitektur ini, server dapat menangani beberapa permintaan secara simultan. Saat satu `worker` memproses permintaan yang lama (misalnya `/sleep` yang tertunda 10 detik), `worker` lain tetap dapat melayani permintaan lain tanpa menunggu. berdasarkan sumber dari internet, hal ini mengatasi hambatan head-of-line blocking yang terjadi pada model single-threaded sebelumnya. Sebagai hasilnya, server menjadi lebih responsif dan mampu menangani lebih banyak klien dalam waktu bersamaan. Implementasi ini juga tetap menjaga keamanan concurrency dengan Rust menggunakan kombinasi `Arc<Mutex<>>` untuk sinkronisasi akses ke channel.
