@@ -11,6 +11,7 @@ Advance Programming
 - [Commit 3](#milestone-3-validating-request-and-selectively-responding)
 - [Commit 4](#milestone-4-simulation-of-slow-request)
 - [Commit 5](#milestone-5-multithreaded-server)
+- [Commit bonus](#commit-bonus-reflection)
 
 ## Milestone 1: Single-Threaded Web Server
 
@@ -215,3 +216,8 @@ dari yang sudah saya lakukan ini, saya paham kalau hal ini menunjukkan mengapa s
 
 Pada tahap ini, server diperbarui menjadi multithreaded menggunakan Thread Pool agar dapat menangani beberapa koneksi secara bersamaan tanpa saling menunggu.
 Perubahan utamanya, saya menggunakan ThreadPool::new(4) pada server, yang membuat 4 `worker` thread untuk menangani permintaan secara paralel. Kemudian, setiap permintaan dikirim ke `worker` thread melalui channel `mpsc::Sender<Job>`, ini akan memastikan distribusi tugas secara efisien. selanjutnya, setiap `worker` memiliki thread yang terus aktif, menunggu tugas baru dari channel, lalu mengeksekusinya sebelum kembali menunggu tugas berikutnya. Dengan perubahan arsitektur ini, server dapat menangani beberapa permintaan secara simultan. Saat satu `worker` memproses permintaan yang lama (misalnya `/sleep` yang tertunda 10 detik), `worker` lain tetap dapat melayani permintaan lain tanpa menunggu. berdasarkan sumber dari internet, hal ini mengatasi hambatan head-of-line blocking yang terjadi pada model single-threaded sebelumnya. Sebagai hasilnya, server menjadi lebih responsif dan mampu menangani lebih banyak klien dalam waktu bersamaan. Implementasi ini juga tetap menjaga keamanan concurrency dengan Rust menggunakan kombinasi `Arc<Mutex<>>` untuk sinkronisasi akses ke channel.
+
+
+## Commit Bonus Reflection
+ 
+Pada commit bonus ini, saya melakukan beberapa perubahan pada `main.rs` dan `lib.rs`. saya mengganti method pembuatan `ThreadPool` dengan build, menggantikan new yang sebelumnya digunakan. perbedaan utama antara keduanya terletak pada cara menangani errornya. method build yang saya lakukan perubahan ini bakal mengembalikan `Result<ThreadPool, PoolCreationError>`, yg mana memungkinkan program menangani kesalahan secara eksplisit tanpa langsung menghentikan eksekusi. kalau terjadi kesalahan, seperti ukuran thread pool yang tidak valid, method ini akan mengembalikan error dengan informasi yang lebih jelas. Sebaliknya, method new langsung mengembalikan objek `ThreadPool `atau memanggil panic! jika ada kesalahan, yang menyebabkan program langsung berhenti. Saya juga menambahkan `struct PoolCreationError` untuk menangani kesalahan pembuatan thread pool dengan lebih baik. Dengan mengimplementasikan `Display` dan `Debug`, error yang terjadi dapat memberikan informasi yang lebih jelas kepada pengguna. Selain itu, dalam main.rs, saya mengubah cara inisialisasi thread pool dari `ThreadPool::new(4)` menjadi `ThreadPool::build(4).unwrap()`, dimana hal ini memastikan bahwa pembuatan thread pool ditangani dengan mekanisme error yang lebih aman dan fleksibel.
