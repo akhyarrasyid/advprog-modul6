@@ -8,8 +8,10 @@ Advance Programming
 **reflections shortcut**
 - [Commit 1](#milestone-1-single-threaded-web-server)
 - [Commit 2](#milestone-2-returning-html)
+- [Commit 3](#milestone-3-validating-request-and-selectively-responding)
+- [Commit 4](#milestone-4-simulation-of-slow-request)
 
- 
+
 ## Milestone 1: Single-Threaded Web Server
 
 Pada tahap pertama ini, saya telah membuat sebuah **web server sederhana** menggunakan **Rust** yang berjalan dalam **mode single-threaded**. Web server ini terdiri dari dua fungsi utama:
@@ -189,7 +191,7 @@ saya juga membuat file `hello.html` yang berisi halaman sederhana:
 
 ## Milestone 3: Validating Request and Selectively Responding
 
-![Commit 3 screen capture](/assets/images/commit3.png)
+![Commit 3 screen capture](/assets/images/commit3.jpg)
 
 pada milestone 3 ini, saya meningkatkan web server agar dapat memvalidasi permintaan yang masuk dan memberikan respons yang sesuai. sekarang web-server bisa menampilkan halaman lain yang berbeda dan bisa juga me-return page 404 kalau requestnya tidak sesuai.
 
@@ -201,3 +203,9 @@ Pada pembaruan ini, server hanya bisa mengekstrak request line pertama yang beri
 3. **Kode lebih bersih dan mudah diperluas** dengan menambahkan case baru tanpa mengulang logika yang sama.
 4. **Menggunakan variabel immutable** (`let` tanpa `mut`), meningkatkan keamanan dalam pemrosesan paralel.
 
+
+## Milestone 4: Simulation of slow request
+
+Pada tahap ini, saya menambahkan penanganan untuk permintaan ke URI `/sleep`. Jika ada pengguna yang mengakses `/sleep`, server akan "tidur" selama 10 detik sebelum mengembalikan respons. Karena server masih berjalan secara single-threaded, permintaan lain yang masuk dalam periode tersebut harus menunggu hingga permintaan sebelumnya selesai diproses. Masalah ini muncul karena fungsi handle_connection menangani setiap permintaan secara berurutan. Ketika ada permintaan yang membutuhkan waktu lama untuk dieksekusi, seperti `/sleep`, seluruh permintaan lain ikut tertunda. Hal ini menunjukkan bahwa server single-threaded memiliki keterbatasan dalam menangani banyak permintaan sekaligus. Secara teknis, server bakal bekerja dengan memproses koneksi secara berurutan dari `listener.incoming()`. Karena hanya ada satu thread yang aktif, setiap koneksi harus selesai sebelum koneksi berikutnya dapat diproses. Dengan menambahkan `thread::sleep()`, saya mensimulasikan operasi yang membutuhkan waktu lama, seperti pemrosesan data yang kompleks atau pemanggilan API eksternal.
+
+dari yang sudah saya lakukan ini, saya paham kalau hal ini menunjukkan mengapa server single-threaded kurang efisien dalam menangani beban tinggi dan bagaimana model multi-threading atau async menjadi solusi untuk meningkatkan performa.
